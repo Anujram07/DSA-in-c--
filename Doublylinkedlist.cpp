@@ -3,28 +3,28 @@ using namespace std;
 
 struct Node {
     int data;
+    Node* prev;
     Node* next;
 };
 
-// Create a new node
 Node* createNode(int value) {
     Node* newNode = new Node();
     newNode->data = value;
+    newNode->prev = nullptr;
     newNode->next = nullptr;
     return newNode;
 }
 
-// Insert at the beginning
 Node* insertBeginning(Node* head, int value) {
     Node* newNode = createNode(value);
     newNode->next = head;
-    return newNode;
+    if (head) head->prev = newNode;
+    head = newNode;
+    return head;
 }
 
-// Insert after a key
-Node* insertAfter(Node* head, int value, int key) {
+Node* insertAfter(Node* head, int key, int value) {
     Node* temp = head;
-
     while (temp && temp->data != key)
         temp = temp->next;
 
@@ -35,30 +35,31 @@ Node* insertAfter(Node* head, int value, int key) {
 
     Node* newNode = createNode(value);
     newNode->next = temp->next;
+    newNode->prev = temp;
+    if (temp->next) temp->next->prev = newNode;
     temp->next = newNode;
 
     return head;
 }
 
-// Insert before a key
 Node* insertBefore(Node* head, int key, int value) {
     if (!head) {
         cout << "List is empty!\n";
         return head;
     }
 
-    if (head->data == key) {  // Insert before head
+    // Insert before head
+    if (head->data == key) {
         Node* newNode = createNode(value);
         newNode->next = head;
-        return newNode;
+        head->prev = newNode;
+        head = newNode;
+        return head;
     }
 
-    Node* prev = nullptr;
     Node* curr = head;
-    while (curr && curr->data != key) {
-        prev = curr;
+    while (curr && curr->data != key)
         curr = curr->next;
-    }
 
     if (!curr) {
         cout << "Key not found!\n";
@@ -67,50 +68,42 @@ Node* insertBefore(Node* head, int key, int value) {
 
     Node* newNode = createNode(value);
     newNode->next = curr;
-    prev->next = newNode;
+    newNode->prev = curr->prev;
+    if (curr->prev) curr->prev->next = newNode;
+    curr->prev = newNode;
 
     return head;
 }
 
-// Delete a node by key
 Node* deleteNode(Node* head, int key) {
     if (!head) {
         cout << "List is empty!\n";
         return head;
     }
 
-    if (head->data == key) {  // Delete head
-        Node* temp = head;
-        head = head->next;
-        delete temp;
-        cout << "Node with value " << key << " deleted.\n";
-        return head;
-    }
-
-    Node* prev = nullptr;
     Node* curr = head;
-    while (curr && curr->data != key) {
-        prev = curr;
+    while (curr && curr->data != key)
         curr = curr->next;
-    }
 
     if (!curr) {
         cout << "Key not found!\n";
         return head;
     }
 
-    prev->next = curr->next;
+    if (curr->prev) curr->prev->next = curr->next;
+    else head = curr->next;             // deleting head
+
+    if (curr->next) curr->next->prev = curr->prev;
+
     delete curr;
     cout << "Node with value " << key << " deleted.\n";
-
     return head;
 }
 
-// Display the list
 void display(Node* head) {
     Node* temp = head;
     while (temp) {
-        cout << temp->data << " -> ";
+        cout << temp->data << " <-> ";
         temp = temp->next;
     }
     cout << "NULL\n";
@@ -124,7 +117,6 @@ int main() {
     cout << "Enter number of nodes: ";
     cin >> n;
 
-    // Create initial list
     for (int i = 0; i < n; i++) {
         int value;
         cout << "Enter value for node " << i + 1 << ": ";
@@ -135,11 +127,12 @@ int main() {
             head = tail = newNode;
         } else {
             tail->next = newNode;
+            newNode->prev = tail;
             tail = newNode;
         }
     }
 
-    cout << "Initial Linked List: ";
+    cout << "Initial Doubly Linked List: ";
     display(head);
 
     int choice;
@@ -164,21 +157,21 @@ int main() {
                 break;
             }
             case 2:
-                cout << "Linked List: ";
+                cout << "Doubly Linked List: ";
                 display(head);
                 break;
             case 3: {
                 int key, val;
-                cout << "Enter the key after which you want to insert: ";
+                cout << "Enter the key (node value) after which you want to insert: ";
                 cin >> key;
                 cout << "Enter value to insert: ";
                 cin >> val;
-                head = insertAfter(head, val, key);
+                head = insertAfter(head, key, val);
                 break;
             }
             case 4: {
                 int key, val;
-                cout << "Enter the key before which you want to insert: ";
+                cout << "Enter the key (node value) before which you want to insert: ";
                 cin >> key;
                 cout << "Enter value to insert: ";
                 cin >> val;
@@ -187,7 +180,7 @@ int main() {
             }
             case 5: {
                 int key;
-                cout << "Enter value of the node to delete: ";
+                cout << "Enter the value of the node to delete: ";
                 cin >> key;
                 head = deleteNode(head, key);
                 break;
